@@ -50,3 +50,65 @@ plt.figure()
 Odata_list.plot(year1, year2, kind='scatter', color='blue', label='Population')
 
 plt.title('Total Population', fontsize=16)
+
+#Convert the dataframe to an array and store into Od_arr
+Od_arr = Odata_list[[year1, year2]].values
+
+#print(Od_arr)
+
+#Using Elbow Method to get the best number of clusters
+sse = []
+k_rng = range(1,10)
+for k in k_rng:
+    km = KMeans(n_clusters=k)
+    km.fit(Odata_list[['1991','2021']])
+    sse.append(km.inertia_)
+    
+print(sse)
+
+#Plot the Elbow plot
+plt.figure()
+plt.plot(k_rng, sse)
+plt.xlabel('K', fontweight='bold', fontsize=14)
+plt.ylabel('SSE', fontweight='bold', fontsize=14)
+plt.title('Elbow Method to get required cluster value', fontweight='bold',
+          fontsize=14)
+plt.show()
+
+#Normalizing the data with MinMaxScaler
+scaler = MinMaxScaler()
+scaler.fit(Odata_list[['1991']])
+Odata_list['1991'] = scaler.transform(Odata_list[['1991']])
+scaler.fit(Odata_list[['2021']])
+Odata_list['2021'] = scaler.transform(Odata_list[['2021']])
+
+#Getting the values of cluster
+km = KMeans(n_clusters=3)
+y_pred = km.fit_predict(Odata_list[['1991','2021']])
+print(y_pred)
+
+#add a new column Cluster in original dataframe
+Odata_list['cluster'] = y_pred
+
+print(Odata_list)
+
+#Finding the cluster center
+cluster_cent = km.cluster_centers_
+print(cluster_cent)
+
+#Creating new dataframes for all three clusters
+df0 = Odata_list[Odata_list.cluster == 0]
+df1 = Odata_list[Odata_list.cluster == 1]
+df2 = Odata_list[Odata_list.cluster == 2]
+
+#Plot the cluster plot with marker as a star at the center of every cluster
+plt.figure()
+plt.scatter(df0['1991'], df0['2021'], color='green', label='cluster 0')
+plt.scatter(df1['1991'], df1['2021'], color='blue', label='cluster 1')
+plt.scatter(df2['1991'], df2['2021'], color='red', label='cluster 2')
+plt.scatter(cluster_cent[:,0], cluster_cent[:,1],
+            color='purple', marker='*', s=250, label='centroid')
+plt.xlabel('1991', fontweight='bold', fontsize=14)
+plt.ylabel('2021', fontweight='bold', fontsize=14)
+plt.legend(fontsize=14)
+plt.title('Total Population', fontweight='bold', fontsize=14)
