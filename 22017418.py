@@ -251,3 +251,124 @@ plt.ylabel("Population", fontweight='bold', fontsize=14)
 plt.legend(loc='upper left', fontsize=14)
 plt.title('US Population', fontweight='bold', fontsize=14)
 plt.show()
+
+#Reading the CO2 Emissions file from the world bank format
+CO2, CO2T = read(CO2Emissions)
+
+#Drop the specific columns with null values
+CO2 = CO2.drop(CO2.loc[:, '1960':'1989'].columns, axis=1)
+CO2 = CO2.drop(['2020', '2021'], axis=1)
+
+print(CO2)
+
+#Transpose the data
+CO2T = CO2.transpose()
+
+print(CO2T)
+
+#Rename the columns
+g = CO2T.rename(columns=CO2T.iloc[0])
+
+#Drop the country name
+g = g.drop(index=g.index[0], axis=0)
+
+g['Year'] = g.index
+
+print(g)
+
+#Fitting the data
+g_chi = g[['Year', 'China']].apply(pd.to_numeric, errors='coerce')
+
+print(g_chi)
+
+# poly function for forecasting CO2/Capita
+def poly(x, a, b, c):
+    
+    """ 
+    Calculates the value of a polynomial function of the form ax^2 + bx + c.
+    
+    Parameters:
+        x = The input value for the polynomial function.
+        a = The coefficient of x^2 in the polynomial.
+        b = The coefficient of x in the polynomial.
+        c = The constant term in the polynomial.
+      
+    """
+    return a*x**2 + b*x + c
+
+def get_error_estimates(x, y, degree):
+    
+    """
+    Calculates the error estimates of a polynomial function.
+   
+    Parameters:
+       x = The x-values of the data points.
+       y = The y-values of the data points.
+       degree = The degree of the polynomial.
+       
+    """
+      
+    coefficients = np.polyfit(x, y, degree)
+    y_estimate = np.polyval(coefficients, x)
+    residuals = y - y_estimate
+ 
+    return np.std(residuals)
+
+#Fits the linear data
+param_cg, cov_cg = opt.curve_fit(poly, g_chi['Year'], g_chi['China'] )
+
+#Calculates the standard deviation
+sigma_cg = np.sqrt(np.diag(cov_cg))
+
+#Creates a new column for the fit figures
+g_chi['fit'] = poly(g_chi['Year'], *param_cg)
+
+year = np.arange(1990, 2041)
+
+#Forecasting the fit figures
+forecast_cg = poly(year, *param_cg)
+
+#Error estimates
+error_cg = get_error_estimates(g_chi['China'], g_chi['fit'], 2)
+print('\n Error Estimates for China CO2 Emissions:\n', error_cg)
+
+#Plotting the China CO2 Emissions data with Forecast
+plt.figure()
+plt.plot(g_chi["Year"], g_chi["China"], label="CO2 Emissions", c='purple')
+plt.plot(year, forecast_cg, label="Forecast", c='red')
+plt.xlabel("Year", fontweight='bold',fontsize=14)
+plt.ylabel("CO2 Emissions", fontweight='bold', fontsize=14)
+plt.legend(fontsize=14)
+plt.title('China', fontweight='bold', fontsize=14)
+plt.show()
+
+
+#Fitting the data
+g_us = g[['Year', 'United States']].apply(pd.to_numeric, errors='coerce')
+
+#Fits the linear data
+param_usg, cov_usg = opt.curve_fit(poly, g_us['Year'], g_us['United States'])
+
+#Calculates the standard deviation
+sigma_usg = np.sqrt(np.diag(cov_usg))
+
+#Creates a column for the fit data
+g_us['fit'] = poly(g_us['Year'], *param_usg)
+
+#Forecasting for the next 20 years
+forecast_usg = poly(year, *param_usg)
+
+#Error estimates
+error_us = get_error_estimates(g_us['United States'], g_us['fit'], 2)
+
+print('\n Error Estimates for US CO2 Emissions:\n', error_us)
+
+#Plotting the United States CO2 Emissions data with Forecast
+plt.figure()
+plt.plot(g_us["Year"], g_us["United States"], label="CO2 Emissions")
+plt.plot(year, forecast_usg, label="Forecast", c='red')
+plt.xlabel("Year", fontweight='bold', fontsize=14)
+plt.ylabel("CO2 Emissions", fontweight='bold', fontsize=14)
+plt.legend(fontsize=14)
+plt.title('United States', fontweight='bold', fontsize=14)
+plt.show()
