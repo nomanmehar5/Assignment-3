@@ -281,7 +281,7 @@ g_chi = g[['Year', 'China']].apply(pd.to_numeric, errors='coerce')
 
 print(g_chi)
 
-# poly function for forecasting CO2/Capita
+# poly function for forecasting CO2 Emission
 def poly(x, a, b, c):
     
     """ 
