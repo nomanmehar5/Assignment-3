@@ -114,3 +114,140 @@ plt.xlabel('1991', fontweight='bold', fontsize=20)
 plt.ylabel('2021', fontweight='bold', fontsize=20)
 plt.legend(fontsize=20)
 plt.title('Total Population', fontweight='bold', fontsize=20)
+
+"""
+
+Curve Fitting Solutions
+
+"""
+
+#Reading the Total population file from the world bank format
+O_data, T_data = read(Total_population)
+
+print(T_data)
+
+#Rename the transposed data columns for population
+df2 = T_data.rename(columns=T_data.iloc[0])
+
+#Drop the country name
+df2 = df2.drop(index=df2.index[0], axis=0)
+df2['Year'] = df2.index
+
+print(df2)
+
+#Fitting for China's population data
+df_fit = df2[['Year', 'China']].apply(pd.to_numeric, errors='coerce')
+
+#Logistic function for curve fitting and forecasting the Total Population
+def logistic(t, n0, g, t0):
+    """ 
+    Calculates the logistic growth of a population.
+    
+    Parameters:
+        t = The current time.
+        n0 = The initial population.
+        g = The growth rate.
+        t0 = The inflection point.
+        
+    """
+    
+    f = n0 / (1 + np.exp(-g*(t - t0)))
+    return f
+
+#Fits the logistic data
+param_ch, covar_ch = opt.curve_fit(logistic, df_fit['Year'], df_fit['China'],
+                                   p0=(3e12, 0.03, 2041))
+
+""""""
+#Error ranges calculation
+def err_ranges(x, func, param, sigma):
+    """
+    Calculates the error ranges for a given function and its parameters.
+    
+    Parameters:
+        x = The input value for the function.
+        func = The function for which the error ranges will be calculated.
+        param = The parameters for the function.
+        sigma = The standard deviation of the data.
+        
+    """
+    
+    #Initiate arrays for lower and upper limits
+    lower = func(x, *param)
+    upper = lower
+
+    #Create a list of tuples of upper and lower limits for parameters
+    uplow = []
+    for p, s in zip(param, sigma):
+        pmin = p - s
+        pmax = p + s
+        uplow.append((pmin, pmax))
+
+    pmix = list(iter.product(*uplow))
+
+    #Calculate the upper and lower limits
+    for p in pmix:
+        y = func(x, *p)
+        lower = np.minimum(lower, y)
+        upper = np.maximum(upper, y)
+
+    return lower, upper
+
+#Calculating the standard deviation
+sigma_ch = np.sqrt(np.diag(covar_ch))
+
+#Creating a new column with the fit data
+df_fit['fit'] = logistic(df_fit['Year'], *param_ch)
+
+#Forecast for the next 20 years
+year = np.arange(1960, 2041)
+
+forecast = logistic(year, *param_ch)
+
+#Calculates the error ranges
+low_ch, up_ch = err_ranges(year, logistic, param_ch, sigma_ch)
+
+#Plotting China's Total Population with Forecast and Confidence range
+plt.figure(dpi=600)
+plt.plot(df_fit["Year"], df_fit["China"], label="Population", c='purple')
+plt.plot(year, forecast, label="Forecast", c='red')
+plt.fill_between(year, low_ch, up_ch, color="orange", alpha=0.7, 
+                 label='Confidence Range')
+plt.xlabel("Year", fontweight='bold', fontsize=14)
+plt.ylabel("Population",fontweight='bold', fontsize=14)
+plt.legend(fontsize=14)
+plt.title('China', fontweight='bold', fontsize=14)
+plt.show()
+
+#Prints the error ranges
+print(err_ranges(2041, logistic, param_ch, sigma_ch))
+
+#Fitting the United State's Population data
+us = df2[['Year', 'United States']].apply(pd.to_numeric, errors='coerce')
+
+#Fits the US logistic data
+param_us, covar_us = opt.curve_fit(logistic, us['Year'], us['United States'], 
+                                   p0=(3e12, 0.03, 2041))
+
+#Calculates the standard deviation for United States data
+sigma_us = np.sqrt(np.diag(covar_us))
+
+#Forecast for the next 20 years
+forecast_us = logistic(year, *param_us)
+
+#Calculate error ranges
+low_us, up_us = err_ranges(year, logistic, param_us, sigma_us)
+
+#Plotting United State's Total Population with Forecast and Confidence range
+plt.style.use('seaborn')
+plt.figure(dpi=600)
+plt.plot(us["Year"], us["United States"],
+         label="Population")
+plt.plot(year, forecast_us, label="Forecast", c='red')
+plt.fill_between(year, low_us, up_us, color="orange", alpha=0.7, 
+                 label="Confidence Range")
+plt.xlabel("Year", fontweight='bold', fontsize=14)
+plt.ylabel("Population", fontweight='bold', fontsize=14)
+plt.legend(loc='upper left', fontsize=14)
+plt.title('US Population', fontweight='bold', fontsize=14)
+plt.show()
