@@ -45,11 +45,13 @@ year2 = '2021'
 Odata_list = O_data.loc[O_data.index,['Country Name', year1, year2]].dropna()
 
 #Plot the data
-plt.figure()
+plt.figure(figsize=(10, 6))
 
 Odata_list.plot(year1, year2, kind='scatter', color='blue', label='Population')
 
-plt.title('Total Population', fontsize=16)
+plt.legend(fontsize=20)
+
+plt.title('Total Population', fontsize=20)
 
 #Convert the dataframe to an array and store into Od_arr
 Od_arr = Odata_list[[year1, year2]].values
@@ -67,12 +69,12 @@ for k in k_rng:
 print(sse)
 
 #Plot the Elbow plot
-plt.figure()
+plt.figure(figsize=(10, 6))
 plt.plot(k_rng, sse)
-plt.xlabel('K', fontweight='bold', fontsize=14)
-plt.ylabel('SSE', fontweight='bold', fontsize=14)
+plt.xlabel('K', fontweight='bold', fontsize=20)
+plt.ylabel('SSE', fontweight='bold', fontsize=20)
 plt.title('Elbow Method to get required cluster value', fontweight='bold',
-          fontsize=14)
+          fontsize=20)
 plt.show()
 
 #Normalizing the data with MinMaxScaler
@@ -87,7 +89,7 @@ km = KMeans(n_clusters=3)
 y_pred = km.fit_predict(Odata_list[['1991','2021']])
 print(y_pred)
 
-#add a new column Cluster in original dataframe
+#Add a new column Cluster in original dataframe
 Odata_list['cluster'] = y_pred
 
 print(Odata_list)
@@ -102,13 +104,13 @@ df1 = Odata_list[Odata_list.cluster == 1]
 df2 = Odata_list[Odata_list.cluster == 2]
 
 #Plot the cluster plot with marker as a star at the center of every cluster
-plt.figure()
+plt.figure(figsize=(10, 6))
 plt.scatter(df0['1991'], df0['2021'], color='green', label='cluster 0')
 plt.scatter(df1['1991'], df1['2021'], color='blue', label='cluster 1')
 plt.scatter(df2['1991'], df2['2021'], color='red', label='cluster 2')
 plt.scatter(cluster_cent[:,0], cluster_cent[:,1],
             color='purple', marker='*', s=250, label='centroid')
-plt.xlabel('1991', fontweight='bold', fontsize=14)
-plt.ylabel('2021', fontweight='bold', fontsize=14)
-plt.legend(fontsize=14)
-plt.title('Total Population', fontweight='bold', fontsize=14)
+plt.xlabel('1991', fontweight='bold', fontsize=20)
+plt.ylabel('2021', fontweight='bold', fontsize=20)
+plt.legend(fontsize=20)
+plt.title('Total Population', fontweight='bold', fontsize=20)
